@@ -18,7 +18,7 @@ header .id{color:var(--tx);font-weight:700}
 .ct{display:flex;gap:8px;flex-wrap:wrap}
 .ct a{color:var(--tx);text-decoration:none;border:1px solid var(--ln);border-radius:6px;padding:6px 12px;font-size:14px;font-weight:600}
 .ct a:hover,.ct a:focus-visible{background:var(--y);border-color:var(--y);outline:none}
-.wrap{display:grid;grid-template-columns:320px 1fr;gap:16px;padding:16px 20px;max-width:1400px;margin:auto}
+.wrap{display:grid;grid-template-columns:380px 1fr;gap:16px;padding:16px 20px;max-width:1400px;margin:auto}
 @media(max-width:900px){.wrap{grid-template-columns:1fr}}
 aside,main{min-width:0}
 details{background:var(--pn);border:1px solid var(--ln);border-radius:6px;margin-bottom:10px}
@@ -64,7 +64,10 @@ li{margin:4px 0;font-size:14px}
 .btn,.tl button{background:var(--y);color:var(--on);border:0;border-radius:6px;padding:8px 14px;font:inherit;font-weight:700;cursor:pointer}
 table.st th,table.st td{padding:4px 3px;font-size:12px}
 table.st input{width:100%;min-width:0;background:var(--bg);color:var(--tx);border:1px solid var(--ln);border-radius:4px;padding:3px 4px;font:12px ui-monospace,Consolas,monospace}
-table.st input.nm{font-family:inherit}
+table.st input.nm{font-family:inherit;min-width:7em}
+table.st input[type=number]{width:4.2em;min-width:4.2em;padding:3px 2px;text-align:center;-moz-appearance:textfield;appearance:textfield}
+table.st input[type=number]::-webkit-inner-spin-button,table.st input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.sqw{overflow-x:auto;padding-bottom:4px}
 .x{background:none;border:0;color:var(--bd);cursor:pointer;font-size:14px}
 :root[data-theme='dark']{--bg:#0c0d0f;--pn:#15171a;--ln:#2a2d33;--tx:#eceae3;--mu:#9a9a92;--y:#ffc400;--yt:#ffc400;--on:#14110a;--ok:#5fd38d;--wa:#ff9f43;--bd:#ff5d4d;--gh:#707068;color-scheme:dark}
 body,details,.sec,table,canvas,select,.ct a,.r input,table.st input{transition:background-color .35s,color .35s,border-color .35s}
@@ -101,16 +104,16 @@ table.st select{width:100%;margin:2px 0 0;padding:2px;font-size:11px}
 <label for="T">Horizonte de simulación</label>
 <select id="T"><option>20</option><option selected>60</option><option>120</option></select>
 <p class="hint">La entrada comienza en t = 1 s.</p></div></details>
-<details open><summary>Condiciones Climáticas / Weather Conditions</summary><div class='pb'>
+<details open><summary>Condiciones Climáticas</summary><div class='pb'>
 <label for='wx'>Escenario ambiental</label>
-<select id='wx'><option value='clear'>Despejado (Clear)</option><option value='rain'>Lluvia (Rain)</option><option value='storm'>Tormenta (Storm)</option><option value='tornado'>Tornado (Vortex)</option></select>
-<label class='ck'><input type='checkbox' id='bd'><span>Parvadas de aves (Bird Strike / Traffic hazard)</span></label>
+<select id='wx'><option value='clear'>Despejado</option><option value='rain'>Lluvia</option><option value='storm'>Tormenta</option><option value='tornado'>Tornado</option></select>
+<label class='ck'><input type='checkbox' id='bd'><span>Parvadas de aves (riesgo de impacto)</span></label>
 <div id='pWx'></div>
 <div id='wxs'></div>
 <p class='hint'>La ráfaga discreta es un perfil 1−cos de 3 s (vertical en cabeceo, lateral en alabeo y guiñada) que comienza en t = 1 s.</p></div></details>
 <details open><summary>Sistema estabilizador (ganancias)</summary><div class="pb"><div id="pK"></div>
 <p class="hint">Lazo cerrado: δ = δ_piloto − K·x. Cabeceo con q y θ, alabeo con p y φ, guiñada con r a través de un filtro washout.</p></div></details>
-<details open><summary>Secuencia de vuelo (mín. 3 pasos)</summary><div class='pb'><table class='st' id='sq'></table><p><button class='btn' id='add'>+ Añadir maniobra</button></p><p><select id='pm' aria-label='Maniobras precargadas'></select></p><p class='hint'>Paso 1: despegue (θ de rotación). Último paso: aterrizaje (la trayectoria de descenso se calcula para llegar a pista). Intermedios: cabeceo θ, alabeo φ y velocidad de guiñada r comandados; usa una maniobra precargada o edita libremente.</p></div></details>
+<details open><summary>Secuencia de vuelo (mín. 3 pasos)</summary><div class='pb'><div class='sqw'><table class='st' id='sq'></table></div><p><button class='btn' id='add'>+ Añadir maniobra</button></p><p><select id='pm' aria-label='Maniobras precargadas'></select></p><p class='hint'>Paso 1: despegue (θ de rotación). Último paso: aterrizaje (la trayectoria de descenso se calcula para llegar a pista). Intermedios: cabeceo θ, alabeo φ y velocidad de guiñada r comandados; usa una maniobra precargada o edita libremente.</p></div></details>
 </aside>
 <main>
 <div class="bar">
@@ -165,7 +168,7 @@ nu.oninput=()=>{const v=parseFloat(nu.value);if(!isNaN(v)&&v>=mn&&v<=mx){st[k]=v
 nu.onchange=()=>{st[k]=Math.min(mx,Math.max(mn,parseFloat(nu.value)||st[k]));run()}})}
 ["ch","ty","T"].forEach(id=>$("#"+id).onchange=e=>{st[id==="ty"?"type":id]=id==="T"?+e.target.value:e.target.value;run()});
 /* Fase 1: condiciones climáticas */
-const WL={clear:'Despejado (Clear)',rain:'Lluvia (Rain)',storm:'Tormenta (Storm)',tornado:'Tornado (Vortex)'};
+const WL={clear:'Despejado',rain:'Lluvia',storm:'Tormenta',tornado:'Tornado'};
 $("#wx").onchange=e=>{st.wx=e.target.value;run()};
 $("#bd").onchange=e=>{st.bird=e.target.checked;run()};
 function wxInfo(){const off=st.wx==='clear'&&!st.bird;$("#s_wxi").disabled=$("#n_wxi").disabled=off;
@@ -281,7 +284,7 @@ const seq=[{n:'Despegue',k:'t',th:10,ph:0,d:20},{n:'Ascenso',k:'m',th:8,ph:0,d:1
 let F=[],pl={i:0,on:false,t:0,acc:0,sel:-1};
 function renderSeq(){const T=$('#sq');T.innerHTML='<tr><th>Paso</th><th>θ °</th><th>φ °</th><th>r °/s</th><th>t s</th><th></th></tr>';
  seq.forEach((s,i)=>{const r=T.insertRow(),inp=(f,mn,mx,sp)=>`<input type='number' data-f='${f}' value='${s[f]||0}' min='${mn}' max='${mx}' step='${sp}'>`;
-  r.innerHTML=`<td>${i+1}. ${s.k==='m'?`<input type='text' class='nm' value='${_t(s.n)}' aria-label='Nombre de la maniobra'><select class='ps' aria-label='Maniobras precargadas'>${popts('Precargada…')}</select>`:_t(s.n)}</td><td>${s.k==='l'?'auto':inp('th',-30,30,1)}</td><td>${s.k==='m'?inp('ph',-60,60,5):'—'}</td><td>${s.k==='m'?inp('r',-15,15,1):'—'}</td><td>${inp('d',5,120,1)}</td><td>${s.k==='m'&&seq.length>3?`<button class='x' aria-label='Quitar paso'>✕</button>`:''}</td>`;
+  r.innerHTML=`<td>${i+1}. ${s.k==='m'?`<input type='text' class='nm' value='${_t(s.n)}' aria-label='Nombre de la maniobra'><select class='ps' aria-label='Maniobras precargadas'>${popts('Precargada…')}</select>`:_t(s.n)}</td><td>${s.k==='l'?'auto':inp('th',-180,180,1)}</td><td>${s.k==='m'?inp('ph',-360,360,5):'—'}</td><td>${s.k==='m'?inp('r',-180,180,1):'—'}</td><td>${inp('d',5,120,1)}</td><td>${s.k==='m'&&seq.length>3?`<button class='x' aria-label='Quitar paso'>✕</button>`:''}</td>`;
   r.querySelectorAll('input[data-f]').forEach(el=>el.onchange=()=>{s[el.dataset.f]=Math.min(+el.max,Math.max(+el.min,+el.value||0));renderSeq();runSeq()});
   const nm=r.querySelector('.nm');if(nm)nm.onchange=()=>{s.n=(ES[nm.value]||nm.value).replace(/[<>'"]/g,'')||'Maniobra';renderSeq();drawSeq()};
   const ps=r.querySelector('.ps');if(ps)ps.onchange=()=>{if(ps.value){Object.assign(s,PRE[ps.value]);renderSeq();runSeq()}};
@@ -297,18 +300,18 @@ function runSeq(){
  $('#sw').textContent=el.maxRe>1e-6||ea.maxRe>1e-6?'Atención: el modelo tiene un modo inestable en este modo de control (por ejemplo CG muy atrás). La secuencia usa respuestas nominales; activa el lazo cerrado o corrige el CG.':'';
  const dt=.02,rho=1.225*Math.pow(1-2.2558e-5*st.H,4.2559),D=Math.PI/180;
  let X={x:0,y:0,h:0,th:0,q:0,ph:0,p:0,psi:0,V:.5*st.V,thf:0,phf:0,rf:0,td:false},tt=0,n=0;F=[];
- seq.forEach((s,si)=>{const N=Math.round(s.d/dt),h0=X.h;
-  for(let i=0;i<N;i++){const u=i/N,al=Math.min(.3,st.m*g*Math.cos(X.ph)/(.5*rho*Math.max(X.V,10)**2*AC.Sw*AC.CLa));
+ seq.forEach((s,si)=>{const N=Math.round(s.d/dt),h0=X.h;X.ph=wrapA(X.ph);X.phf=X.ph;X.th=wrapA(X.th);X.thf=X.th;
+  for(let i=0;i<N;i++){const u=i/N,al=Math.max(-.3,Math.min(.3,st.m*g*Math.cos(X.ph)/(.5*rho*Math.max(X.V,10)**2*AC.Sw*AC.CLa)));
    let thc=s.th*D,phc=s.ph*D;
    if(s.k==='t'){if(u<.25){thc=0;phc=0;X.V=st.V*(.5+2*u)}else X.V=st.V}
    else if(s.k==='m')X.V+=(st.V-X.V)*dt/5;
    else{const gc=Math.max(-.25,-h0/(.8*st.V*s.d));phc=0;thc=al+gc*(u<.8?1:Math.max(.1,1-(u-.8)*4.5));if(X.td){thc=0;X.V=Math.max(0,X.V-6*dt)}}
    X.thf+=(thc-X.thf)*dt/1.2;X.phf+=(phc-X.phf)*dt;
-   X.q+=(wn*wn*(X.thf-X.th)-2*z*wn*X.q)*dt;X.th=Math.max(-1,Math.min(1,X.th+X.q*dt));
+   X.q+=(wn*wn*(X.thf-X.th)-2*z*wn*X.q)*dt;X.th=Math.max(-3.4,Math.min(3.4,X.th+X.q*dt));
    if(s.k==='t'&&u<.25){X.th=0;X.q=0;X.thf=0}
    const pc=Math.max(-pm,Math.min(pm,X.phf-X.ph));X.p+=(pc-X.p)*dt/tr;X.ph+=X.p*dt;
    let gam=X.th-al;if(X.h<=0&&gam<0){gam=0;if(s.k==='l'&&u>.3)X.td=true}
-   X.h=Math.max(0,X.h+X.V*Math.sin(gam)*dt);X.rf+=((s.r||0)*D-X.rf)*dt/.8;X.psi+=(g*Math.tan(X.ph)*(s.c===0?0:1)/Math.max(X.V,10)+X.rf)*dt;
+   X.h=Math.max(0,X.h+X.V*Math.sin(gam)*dt);X.rf+=((s.r||0)*D-X.rf)*dt/.8;X.psi+=(g*Math.sin(X.ph)/Math.max(Math.abs(Math.cos(X.ph)),.5)*(s.c===0?0:1)/Math.max(X.V,10)+X.rf)*dt;
    X.x+=X.V*Math.cos(gam)*Math.cos(X.psi)*dt;X.y+=X.V*Math.cos(gam)*Math.sin(X.psi)*dt;
    if(n++%2===0)F.push({t:tt,x:X.x,y:X.y,h:X.h,th:X.th/D,ph:X.ph/D,psi:X.psi/D,V:X.V,g:gam/D,al:al/D,si,thc:thc/D,phc:phc/D});
    tt+=dt}});
@@ -342,24 +345,30 @@ function wxScreen(x,W,H){                     /* marco de pantalla: lluvia, dest
 let wxRaf=0,wxLast=0;                          /* bucle ligero (~22 fps) que solo redibuja el HUD; se pausa al animar la secuencia */
 function wxTick(n){wxRaf=requestAnimationFrame(wxTick);if(n-wxLast<45||pl.on||document.hidden||!F[pl.i])return;wxLast=n;hud(F[pl.i])}
 function wxSync(){cancelAnimationFrame(wxRaf);wxRaf=0;if((st.wx!=='clear'||st.bird)&&!wxRM())wxRaf=requestAnimationFrame(wxTick)};
-function hud(f){const[x,W,H]=cv2('hud'),D=Math.PI/180,cx=W/2,cy=H/2,pp=H/36,L=Math.max(W,H)*2;
- x.save();x.beginPath();x.rect(0,0,W,H);x.clip();x.translate(cx,cy);x.rotate(-f.ph*D);x.translate(0,f.th*pp);
+/* Vuelo invertido: utilidades de actitud */
+const wrapD=a=>((a%360)+540)%360-180,wrapA=a=>((a+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI;
+function att(f){let t=wrapD(f.th),p=f.ph;if(t>90){t=180-t;p+=180}else if(t<-90){t=-180-t;p+=180}return{th:t,ph:p}}   /* actitud equivalente para el horizonte */
+function invTag(x,W,H,cx,f){if(Math.cos(f.th*Math.PI/180)*Math.cos(f.ph*Math.PI/180)>=-.05)return;
+ const s=_t('INVERTIDO');x.save();x.font='bold 14px ui-monospace,monospace';x.textAlign='center';const w=x.measureText(s).width+20;
+ x.fillStyle='rgba(210,20,20,.85)';x.fillRect(cx-w/2,H*.3-15,w,22);x.fillStyle='#fff';x.fillText(s,cx,H*.3);x.restore()}
+function hud(f){const[x,W,H]=cv2('hud'),D=Math.PI/180,cx=W/2,cy=H/2,pp=H/36,L=Math.max(W,H)*2,{th:tv,ph:pv}=att(f);
+ x.save();x.beginPath();x.rect(0,0,W,H);x.clip();x.translate(cx,cy);x.rotate(-pv*D);x.translate(0,tv*pp);
  const gs=x.createLinearGradient(0,-H*1.2,0,0),gg=x.createLinearGradient(0,0,0,H*1.2);gs.addColorStop(0,night?'#02040f':'#2f78d6');gs.addColorStop(1,night?'#0b1a4a':'#a5d5ff');gg.addColorStop(0,night?'#1d160c':'#b8964d');gg.addColorStop(1,night?'#0b0805':'#7a5d29');
  x.fillStyle=gs;x.fillRect(-L,-L,2*L,L);x.fillStyle=gg;x.fillRect(-L,0,2*L,L);wxWorld(x,W,H);x.shadowColor='rgba(0,0,0,.55)';x.shadowBlur=night?0:3;
  x.strokeStyle='#fff';x.fillStyle='#fff';x.font='12px ui-monospace,monospace';x.textAlign='center';
- for(let d=-30;d<=30;d+=5){const y=-d*pp,w=d%10===0?46:26;x.lineWidth=d===0?3:1.5;x.beginPath();
+ for(let d=-90;d<=90;d+=5){if(Math.abs(d)>30&&d%10)continue;const y=-d*pp,w=d%10===0?46:26;x.lineWidth=d===0?3:1.5;x.beginPath();
   if(d===0){x.moveTo(-L,0);x.lineTo(L,0)}else{x.moveTo(-w,y);x.lineTo(-12,y);x.moveTo(12,y);x.lineTo(w,y);if(d%10===0){x.fillText(Math.abs(d),-w-14,y+4);x.fillText(Math.abs(d),w+14,y+4)}}x.stroke()}
  x.restore();
  wxScreen(x,W,H);x.save();x.translate(cx,cy);x.strokeStyle='#fff';x.lineWidth=2;const RHud=H*.36;
  [-60,-45,-30,-20,-10,0,10,20,30,45,60].forEach(a=>{x.save();x.rotate(a*D);x.beginPath();x.moveTo(0,-RHud);x.lineTo(0,-RHud-(a%30===0?12:7));x.stroke();x.restore()});
- x.rotate(-f.ph*D);x.fillStyle='#ffd21f';x.beginPath();x.moveTo(0,-RHud+2);x.lineTo(-7,-RHud+16);x.lineTo(7,-RHud+16);x.fill();x.restore();
+ x.rotate(-pv*D);x.fillStyle='#ffd21f';x.beginPath();x.moveTo(0,-RHud+2);x.lineTo(-7,-RHud+16);x.lineTo(7,-RHud+16);x.fill();x.restore();
  x.strokeStyle='#fff';x.lineWidth=3;x.beginPath();x.moveTo(cx-22,cy+8);x.lineTo(cx,cy-2);x.lineTo(cx+22,cy+8);x.stroke();
  const fy=cy+(f.th-f.g)*pp;x.strokeStyle='#4df0ff';x.lineWidth=2.5;x.beginPath();x.arc(cx,fy,9,0,7);x.moveTo(cx-26,fy);x.lineTo(cx-9,fy);x.moveTo(cx+9,fy);x.lineTo(cx+26,fy);x.moveTo(cx,fy-9);x.lineTo(cx,fy-18);x.stroke();
  const dx=Math.max(-W*.3,Math.min(W*.3,(f.phc-f.ph)*pp*.5)),dy=Math.max(-H*.3,Math.min(H*.3,-(f.thc-f.th)*pp));
  x.strokeStyle='#ff4fd8';x.lineWidth=2.5;x.beginPath();x.moveTo(cx+dx,cy+dy-10);x.lineTo(cx+dx+10,cy+dy);x.lineTo(cx+dx,cy+dy+10);x.lineTo(cx+dx-10,cy+dy);x.closePath();x.stroke();
  tape(x,8,58,cy,H*.55,f.V*1.944,40,5,10,false);tape(x,W-66,58,cy,H*.55,f.h*3.281,200,20,40,true);
  x.fillStyle='#fff';x.textAlign='center';x.font='bold 13px ui-monospace,monospace';
- hdg(x,W,H,cx,f);
+ hdg(x,W,H,cx,f);invTag(x,W,H,cx,f);
 x.textAlign='left';
 x.fillText('\u03B1 '+f.al.toFixed(1)+'\u00B0   \u03B3 '+f.g.toFixed(1)+'\u00B0   \u03B8 '+f.th.toFixed(1)+'\u00B0   \u03C6 '+f.ph.toFixed(0)+'\u00B0',76,64);
 x.textAlign='center';
@@ -379,7 +388,7 @@ function cmp(f0){const[x,W,H]=cv2('cmp'),si=pl.sel>=0?Math.min(pl.sel,seq.length
  x.fillText(_t('Vista lateral (cabeceo θ)'),W*.17,18);x.fillText(_t('Vista trasera (alabeo φ)'),W*.5,18);x.fillText(_t('Vista superior (guiñada ψ)'),W*.83,18);
  [[acSide,W*.17,'th'],[acRear,W*.5,'ph'],[acTop,W*.83,'psi']].forEach(([fn,cx,k])=>{fn(x,cx,cy,pv[k],sc,C('--gh'),.95,[6,4]);[.25,.5,.75,1].forEach(r=>fn(x,cx,cy,F[a0+Math.floor((a1-a0)*r)][k],sc,C('--y'),.28));fn(x,cx,cy,f[k],sc,C('--tx'),1)});
  x.font='12px system-ui,sans-serif';x.fillText(_t('Gris punteado:')+' '+pn+' · '+_t('Amarillo tenue: frames del paso')+' · '+_t('Oscuro: instante actual'),W/2,H-8);
- dl.textContent=`${_t('Paso')} «${_t(s.n)}» ${_t('frente a')} ${pn}: Δθ ${(f.th-pv.th).toFixed(1)}°, Δφ ${(f.ph-pv.ph).toFixed(1)}°, ${_t('Δrumbo')} ${(f.psi-pv.psi).toFixed(1)}°, ${_t('Δaltitud')} ${(f.h-pv.h).toFixed(0)} m, ΔV ${((f.V-pv.V)*1.944).toFixed(0)} kt`}
+ dl.textContent=`${_t('Paso')} «${_t(s.n)}» ${_t('frente a')} ${pn}: Δθ ${wrapD(f.th-pv.th).toFixed(1)}°, Δφ ${wrapD(f.ph-pv.ph).toFixed(1)}°, ${_t('Δrumbo')} ${wrapD(f.psi-pv.psi).toFixed(1)}°, ${_t('Δaltitud')} ${(f.h-pv.h).toFixed(0)} m, ΔV ${((f.V-pv.V)*1.944).toFixed(0)} kt`}
 function drawSeq(){const f=F[pl.i];if(!f)return;$('#tl').value=pl.i;$('#ti').textContent=`${f.t.toFixed(1)} s · ${_t('Paso')} ${f.si+1}/${seq.length}: ${_t(seq[f.si].n)}`;hud(f);traj(f);cmp(f)}
 $('#cs').onchange=e=>{pl.sel=+e.target.value;drawSeq()};
 $('#tl').oninput=e=>{pl.i=+e.target.value;drawSeq()};
@@ -407,7 +416,7 @@ const EN={'Rogelio Quiroz Sánchez, Ingeniero Aeroespacial':'Rogelio Quiroz Sán
 'Perfil de vuelo: altitud (m) frente a distancia (m), escala vertical exagerada':'Flight profile: altitude (m) vs. distance (m), vertical scale exaggerated','Vista lateral (cabeceo θ)':'Side view (pitch θ)','Vista trasera (alabeo φ)':'Rear view (roll φ)','Vista superior (guiñada ψ)':'Top view (yaw ψ)','Gris punteado:':'Dashed gray:','Amarillo tenue: frames del paso':'Faint yellow: step frames','Oscuro: instante actual':'Dark: current instant','fin de':'end of','estado inicial en pista':'initial state on runway','frente a':'vs.','Δrumbo':'ΔHeading','Δaltitud':'ΔAltitude','fugoide':'phugoid','corto periodo':'short period','balanceo holandés':'Dutch roll',
 'Tipo de aeronave':'Aircraft type','Avión ligero (referencia)':'Light aircraft (reference)','Avión comercial (Commercial Airliner)':'Commercial Airliner','Avión de carga / transporte (Cargo / Transport Aircraft)':'Cargo / Transport Aircraft','Caza militar / interceptor (Jet Fighter)':'Jet Fighter / Interceptor','Avión acrobático (Acrobatic / Stunt Aircraft)':'Acrobatic / Stunt Aircraft',
 'Avión ligero de referencia (clase Cessna 172): dinámica rápida y estable.':'Reference light aircraft (Cessna 172 class): fast, stable dynamics.','Alta inercia: respuestas lentas y bien amortiguadas. Condición de ascenso representativa.':'High inertia: slow, well-damped responses. Representative climb condition.','Masa elevada, CG desplazado hacia atrás (margen estático reducido) e inercias pesadas; ráfaga de 3 m/s precargada.':'Heavy mass, aft-shifted CG (reduced static margin) and large inertias; 3 m/s gust preloaded.','Alta agilidad y estabilidad estática negativa (CG detrás del punto neutro): inestable en lazo abierto, requiere el controlador activo.':'High agility and negative static stability (CG behind the neutral point): unstable in open loop, requires the active controller.','Tasas de respuesta muy elevadas y gran autoridad de control. El empuje no se modela, solo la dinámica de actitud.':'Very high response rates and large control authority. Thrust is not modeled, only attitude dynamics.',
-'Mapa de polos en el plano complejo':'Pole map in the complex plane','Mapa de polos':'Pole map','Región estable (todos los polos con Re < 0)':'Stable region (all poles with Re < 0)','Semiplano estable':'Stable half-plane','Semiplano inestable':'Unstable half-plane','Reporte exportado (vista de texto)':'Exported report (text view)','Reporte':'Report','⬇ Exportar CSV':'⬇ Export CSV','⬇ Exportar JSON':'⬇ Export JSON','Condiciones Climáticas / Weather Conditions':'Weather Conditions','Escenario ambiental':'Environmental scenario','Despejado (Clear)':'Clear','Lluvia (Rain)':'Rain','Tormenta (Storm)':'Storm','Tornado (Vortex)':'Tornado (Vortex)','Parvadas de aves (Bird Strike / Traffic hazard)':'Bird flocks (Bird Strike / Traffic hazard)','Ráfaga discreta 1−cos (m/s)':'Discrete 1−cos gust (m/s)','Intensidad del fenómeno (%)':'Phenomenon intensity (%)','Escenario activo':'Active scenario','Intensidad':'Intensity','Parvadas de aves':'Bird flocks','Presente':'Present','Ausente':'Absent'};
+'Mapa de polos en el plano complejo':'Pole map in the complex plane','Mapa de polos':'Pole map','Región estable (todos los polos con Re < 0)':'Stable region (all poles with Re < 0)','Semiplano estable':'Stable half-plane','Semiplano inestable':'Unstable half-plane','Reporte exportado (vista de texto)':'Exported report (text view)','Reporte':'Report','⬇ Exportar CSV':'⬇ Export CSV','⬇ Exportar JSON':'⬇ Export JSON','Condiciones Climáticas':'Weather Conditions','Escenario ambiental':'Environmental scenario','Despejado':'Clear','Lluvia':'Rain','Tormenta':'Storm','Tornado':'Tornado (Vortex)','Parvadas de aves (riesgo de impacto)':'Bird flocks (Bird Strike / Traffic hazard)','Ráfaga discreta 1−cos (m/s)':'Discrete 1−cos gust (m/s)','Intensidad del fenómeno (%)':'Phenomenon intensity (%)','Escenario activo':'Active scenario','Intensidad':'Intensity','Parvadas de aves':'Bird flocks','Presente':'Present','Ausente':'Absent','INVERTIDO':'INVERTED'};
 const LONG={'Posición del CG':'CG location (x/c̄)','La entrada comienza':'The input starts at t = 1 s.','La ráfaga discreta':'The discrete gust is a 3 s 1−cos profile (vertical for pitch, lateral for roll and yaw) starting at t = 1 s.','Lazo cerrado: δ =':'Closed loop: δ = δ_pilot − K·x. Pitch feeds back q and θ, roll feeds back p and φ, yaw feeds back r through a washout filter.','Paso 1: despegue':'Step 1: takeoff (rotation pitch θ). Last step: landing (the descent path is computed to reach the runway). Intermediate steps: commanded pitch θ, bank φ and yaw rate r; load a preset maneuver or edit freely.','Línea amarilla:':'Yellow line: active mode. Dashed gray line: the other mode, for reference. Vertical yellow line: settling time (±2 % band).','La actitud sigue':'Attitude follows the short-period response and the roll damping of the current model (open or closed loop); the flight path is kinematic with a coordinated-turn heading rate. This is not a nonlinear 6-DOF model. Pure yaw is approximated as a commanded yaw rate (sideslip is not modeled). Compass: the rose is referenced to North (N); the cyan vector is the current heading and the dashed magenta line is the initial heading (000°).','Atención: el modelo':'Warning: the model has an unstable mode in this control mode (e.g., CG too far aft). The sequence uses nominal responses; enable closed loop or correct the CG.',
 'Planta:':'Plant:          ẋ = A·x + B·δ + G·w_gust\nActuator:       δ̇ = (δ_cmd − δ)/τ ,  τ adjustable\nOpen loop:      δ_cmd = δ_pilot\nClosed loop:    δ_cmd = δ_pilot − K·x   ⇒   ẋ = (A − B·K)·x + B·δ_pilot\nStability:      all eigenvalues of A_cl with Re(λ) < 0\nModes:          ζ = −Re(λ)/|λ| ,  ωn = |λ|',
 'Perturbaciones pequeñas':'Small perturbations about straight and level flight (θ₀ = 0), stability axes, Ixz = 0.','Subsistemas longitudinal':'Decoupled longitudinal (u, w, q, θ) and lateral-directional (v, p, r, φ, ψ) subsystems. Dimensional derivatives are computed from nondimensional coefficients (CLα, Cmα, Cmq, Clp, Cnβ, etc.) using the Nelson formulation.','El margen estático fija':'Static margin sets Cmα = −CLα·(h_n − h). Move the CG aft until it is negative to see the unstable open-loop mode and how closed loop stabilizes it.','Coeficientes representativos':'Representative coefficients per category (light aircraft per Nelson/Roskam, Cessna 172 class; the rest are indicative values, not a specific type). Check them against the source before citing. Linear actuators without saturation; ISA atmosphere.','Cada × es un polo':'Each × is a pole (λ = σ ± jω). The left half-plane (green) is the stable region. Gray: open loop; yellow: closed loop with the current gains. Symmetric logarithmic scale.','Si tu navegador bloquea':'If your browser blocks the download (for example in the preview), copy the contents of this box.'};
