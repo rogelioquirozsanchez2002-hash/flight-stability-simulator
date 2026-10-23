@@ -367,6 +367,7 @@ x.font='11px ui-monospace,monospace';x.fillText('kt',37,cy-H*.55/2-4);x.fillText
 function acRear(c,x,y,ph,s,col,al,dash){c.save();c.translate(x,y);c.rotate(ph*Math.PI/180);c.strokeStyle=col;c.fillStyle=col;c.lineWidth=2.5;c.setLineDash(dash||[]);c.globalAlpha=al;
  c.beginPath();c.moveTo(-s,0);c.lineTo(s,0);c.moveTo(0,0);c.lineTo(0,-s*.5);c.moveTo(-s*.25,-s*.5);c.lineTo(s*.25,-s*.5);c.stroke();
  c.beginPath();c.arc(0,0,s*.16,0,7);c.globalAlpha=al*.4;c.fill();c.globalAlpha=al;c.stroke();c.restore()}
+ function acSide(c,x,y,th,s,col,al,dash){c.save();c.translate(x,y);c.rotate(th*Math.PI/180);c.strokeStyle=col;c.fillStyle=col;c.lineWidth=2.5;c.setLineDash(dash||[]);c.globalAlpha=al;c.beginPath();c.moveTo(-s,0);c.lineTo(s,0);c.moveTo(-s*.3,0);c.lineTo(-s*.6,-s*.4);c.moveTo(0,0);c.lineTo(s*.3,-s*.3);c.stroke();c.beginPath();c.arc(0,0,s*.15,0,7);c.globalAlpha=al*.4;c.fill();c.globalAlpha=al;c.stroke();c.restore()}
 function traj(f){const[x,W,H]=cv2('trj'),m=40,X1=Math.max(...F.map(a=>a.x),1),Hm=Math.max(...F.map(a=>a.h),20)*1.25,X=v=>m+v/X1*(W-m-12),Y=v=>H-26-v/Hm*(H-48);
  x.fillStyle=C('--mu');x.font='11px ui-monospace,monospace';x.textAlign='left';x.fillText(_t('Perfil de vuelo: altitud (m) frente a distancia (m), escala vertical exagerada'),m,14);
  x.strokeStyle=C('--mu');x.lineWidth=1;x.beginPath();x.moveTo(m,Y(0));x.lineTo(W-8,Y(0));x.stroke();x.fillText('0',m-12,Y(0)+4);x.fillText(Math.round(Hm/1.25),4,Y(Hm/1.25)+4);x.fillText(Math.round(X1)+' m',W-62,H-8);
