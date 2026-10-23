@@ -349,9 +349,9 @@ const D=Math.PI/180,cx=W/2,cy=H/2,pp=H/36,L=Math.max(W,H)*2;
  for(let d=-30;d<=30;d+=5){const y=-d*pp,w=d%10===0?46:26;x.lineWidth=d===0?3:1.5;x.beginPath();
   if(d===0){x.moveTo(-L,0);x.lineTo(L,0)}else{x.moveTo(-w,y);x.lineTo(-12,y);x.moveTo(12,y);x.lineTo(w,y);if(d%10===0){x.fillText(Math.abs(d),-w-14,y+4);x.fillText(Math.abs(d),w+14,y+4)}}x.stroke()}
  x.restore();
- wxScreen(x,W,H);x.save();x.translate(cx,cy);x.strokeStyle='#fff';x.lineWidth=2; R=H*.36;
- [-60,-45,-30,-20,-10,0,10,20,30,45,60].forEach(a=>{x.save();x.rotate(a*D);x.beginPath();x.moveTo(0,-R);x.lineTo(0,-R-(a%30===0?12:7));x.stroke();x.restore()});
- x.rotate(-f.ph*D);x.fillStyle='#ffd21f';x.beginPath();x.moveTo(0,-R+2);x.lineTo(-7,-R+16);x.lineTo(7,-R+16);x.fill();x.restore();
+ wxScreen(x,W,H);x.save();x.translate(cx,cy);x.strokeStyle='#fff';x.lineWidth=2; RHud=H*.36;
+ [-60,-45,-30,-20,-10,0,10,20,30,45,60].forEach(a=>{x.save();x.rotate(a*D);x.beginPath();x.moveTo(0,-RHud);x.lineTo(0,-RHud-(a%30===0?12:7));x.stroke();x.restore()});
+ x.rotate(-f.ph*D);x.fillStyle='#ffd21f';x.beginPath();x.moveTo(0,-RHud+2);x.lineTo(-7,-RHud+16);x.lineTo(7,-RHud+16);x.fill();x.restore();
  x.strokeStyle='#fff';x.lineWidth=3;x.beginPath();x.moveTo(cx-22,cy+8);x.lineTo(cx,cy-2);x.lineTo(cx+22,cy+8);x.stroke();
  const fy=cy+(f.th-f.g)*pp;x.strokeStyle='#4df0ff';x.lineWidth=2.5;x.beginPath();x.arc(cx,fy,9,0,7);x.moveTo(cx-26,fy);x.lineTo(cx-9,fy);x.moveTo(cx+9,fy);x.lineTo(cx+26,fy);x.moveTo(cx,fy-9);x.lineTo(cx,fy-18);x.stroke();
  const dx=Math.max(-W*.3,Math.min(W*.3,(f.phc-f.ph)*pp*.5)),dy=Math.max(-H*.3,Math.min(H*.3,-(f.thc-f.th)*pp));
