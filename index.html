@@ -491,8 +491,18 @@ function hdg(x,W,H,cx,f){const D=Math.PI/180,ps=((f.psi%360)+360)%360,tw=W*.5,pd
  x.fillStyle='#fff';x.beginPath();x.moveTo(0,-6);x.lineTo(-5,6);x.lineTo(5,6);x.closePath();x.fill();x.restore();
  x.fillStyle='#fff';x.font='bold 12px ui-monospace,monospace';x.textAlign='left';x.fillText(_t('Δrumbo')+' '+(dh>=0?'+':'')+dh.toFixed(0)+'°',cx+r+10,ry+4);x.textAlign='center'}
 let night=false;
-$('#tg').onclick=()=>{night=!night;document.documentElement.dataset.theme=night?'dark':'light';$('#tg').setAttribute('aria-checked',night);$('#tg').setAttribute('aria-label',night?'Modo noche activado':'Modo día activado');draw(prog);drawSeq()};
-renderSeq();run();setLang('en');
+$('#tg').onclick=()=>{
+    night=!night;
+    document.documentElement.dataset.theme=night?'dark':'light';
+    $('#tg').setAttribute('aria-checked',night);
+    $('#tg').setAttribute('aria-label',night?'Modo noche activado':'Modo día activado');
+    draw(prog);
+    drawSeq();
+};
+renderSeq();
+run();
+draw(1);
+setLang('en');
 </script>
 </body>
 </html>
