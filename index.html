@@ -502,7 +502,9 @@ $('#tg').onclick=()=>{
 renderSeq();
 run();
 draw(1);
+// Forzar idioma inglés por defecto al cargar y habilitar los botones
 setLang('en');
-</script>
+$('#l_es').onclick=()=>setLang('es');
+$('#l_en').onclick=()=>setLang('en');</script>
 </body>
 </html>
