@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -88,7 +88,7 @@ table.st select{width:100%;margin:2px 0 0;padding:2px;font-size:11px}
 </style>
 </head>
 <body>
-<header><div><p class="id">Rogelio Quiroz Sánchez, Ingeniero Aeroespacial</p><h1>Simulador de estabilidad y control de vuelo</h1><p>Dinámica lineal de cuerpo rígido, lazo abierto frente a lazo cerrado</p></div><div class='hr'><nav class='ct' id='ct' aria-label='Contacto'></nav><div class='sw2'><button id='tg' class='tgl' role='switch' aria-checked='false' aria-label='Modo noche' title='Alternar entre modo día y modo noche'><span aria-hidden='true'>☀</span><i></i><span aria-hidden='true'>☾</span></button><div class='lgs' role='group' aria-label='Idioma'><button id='l_es' aria-pressed='true'>ES</button><button id='l_en' aria-pressed='false'>EN</button></div></div></div></header>
+<header><div><p class="id">Rogelio Quiroz Sánchez, Ingeniero Aeroespacial</p><h1>Simulador de estabilidad y control de vuelo</h1><p>Dinámica lineal de cuerpo rígido, lazo abierto frente a lazo cerrado</p></div><div class='hr'><nav class='ct' id='ct' aria-label='Contacto'></nav><div class='sw2'><button id='tg' class='tgl' role='switch' aria-checked='false' aria-label='Modo noche' title='Alternar entre modo día y modo noche'><span aria-hidden='true'>☀</span><i></i><span aria-hidden='true'>☾</span></button><div class='lgs' role='group' aria-label='Idioma'><button id='l_es' aria-pressed='false'>ES</button><button id='l_en' aria-pressed='true'>EN</button></div></div></div></header>
 <div class="wrap">
 <aside>
 <details open><summary>Aeronave y condición de vuelo</summary><div class='pb'><label for='ac'>Tipo de aeronave</label><select id='ac'><option value='light'>Avión ligero (referencia)</option><option value='airliner'>Avión comercial (Commercial Airliner)</option><option value='cargo'>Avión de carga / transporte (Cargo / Transport Aircraft)</option><option value='fighter'>Caza militar / interceptor (Jet Fighter)</option><option value='acro'>Avión acrobático (Acrobatic / Stunt Aircraft)</option></select><p class='hint' id='acd'></p><div id='pAc'></div><p class="hint m" id="sm"></p></div></details>
@@ -168,7 +168,7 @@ const WL={clear:'Despejado (Clear)',rain:'Lluvia (Rain)',storm:'Tormenta (Storm)
 $("#wx").onchange=e=>{st.wx=e.target.value;run()};
 $("#bd").onchange=e=>{st.bird=e.target.checked;run()};
 function wxInfo(){const off=st.wx==='clear'&&!st.bird;$("#s_wxi").disabled=$("#n_wxi").disabled=off;
- $("#wxs").innerHTML=`<p><span>Escenario activo</span>: <b>${WL[st.wx]}</b></p><p><span>Intensidad</span>: ${off?'—':st.wxi+' %'}</p><p><span>Parvadas de aves</span>: <b>${st.bird?'Presente':'Ausente'}</b></p>`}
+ $("#wxs").innerHTML=`<p><span>Escenario activo</span>: <b>${WL[st.wx]}</b></p><p><span>Intensidad</span>: ${off?'—':st.wxi+' %'}</p><p><span>Parvadas de aves</span>: <b>${st.bird?'Presente':'Ausente'}</b></p>`;wxSync()}
 CONTACT.filter(c=>c[1]).forEach(([l,u])=>{const a=document.createElement("a");a.textContent=u.startsWith("mailto:")?u.slice(7):l;a.href=u;if(!u.startsWith("mailto:")){a.target="_blank";a.rel="noopener"}$("#ct").append(a)});
 $("#mo").onclick=()=>{st.mode="o";draw(1);runSeq()};$("#mc").onclick=()=>{st.mode="c";draw(1);runSeq()};
 
@@ -316,15 +316,39 @@ function cv2(id){const c=$('#'+id),d=devicePixelRatio||1,W=c.clientWidth,H=c.cli
 function tape(x,x0,w,cy,Ht,val,span,step,lab,right){x.fillStyle='rgba(0,0,0,.35)';x.fillRect(x0,cy-Ht/2,w,Ht);x.save();x.beginPath();x.rect(x0,cy-Ht/2,w,Ht);x.clip();x.fillStyle='#fff';x.strokeStyle='#fff';x.lineWidth=1.5;x.font='12px ui-monospace,monospace';x.textAlign=right?'left':'right';
  const pk=Ht/span;for(let k=Math.ceil((val-span/2)/step)*step;k<=val+span/2;k+=step){const y=cy-(k-val)*pk,xe=right?x0:x0+w;x.beginPath();x.moveTo(xe,y);x.lineTo(xe+(right?10:-10),y);x.stroke();if(k%lab===0)x.fillText(k,right?x0+14:x0+w-14,y+4)}
  x.restore();x.fillStyle='#000';x.fillRect(x0,cy-11,w,22);x.strokeStyle='#ffd21f';x.strokeRect(x0,cy-11,w,22);x.fillStyle='#fff';x.textAlign='center';x.font='bold 13px ui-monospace,monospace';x.fillText(Math.round(val),x0+w/2,cy+5)}
-function hud(f){const[x,W,H]=cv2('hud'),D=Math.PI/180,cx=W/2,cy=H/2,pp=H/36,L=Math.max(W,H)*2;
+/* Fase 1: efectos visuales del clima en el HUD */
+const hs=(i,k)=>{const v=Math.sin(i*127.1+k*311.7)*43758.5453;return v-Math.floor(v)};
+const wxRM=()=>matchMedia('(prefers-reduced-motion:reduce)').matches;
+function wxWorld(x,W,H){                      /* marco del horizonte: nubes y embudo anclados al mundo */
+ if(st.wx==='clear')return;const v=Math.min(1.5,st.wxi/100),t=wxRM()?0:performance.now()/1000,L=Math.max(W,H)*2;
+ const gr=x.createLinearGradient(0,-H*.7,0,0);gr.addColorStop(0,`rgba(18,22,34,${(st.wx==='rain'?.18:.38)*v})`);gr.addColorStop(1,'rgba(18,22,34,0)');x.fillStyle=gr;x.fillRect(-L,-H*.7,2*L,H*.7);
+ if(st.wx!=='tornado')return;
+ const vx=-W*.22,by=H*.3,ty=-H*.55,wb=W*.012,wt=W*.10,sw=Math.sin(t*1.3)*14;x.save();
+ x.fillStyle=`rgba(55,55,62,${.2*Math.min(v,1.2)})`;x.beginPath();x.moveTo(vx-wb,by);x.lineTo(vx+wb,by);x.lineTo(vx+wt+sw,ty);x.lineTo(vx-wt+sw,ty);x.closePath();x.fill();
+ x.strokeStyle='rgba(40,40,46,.32)';x.lineWidth=2;
+ for(let k=0;k<=12;k++){const u=k/12,y=by+(ty-by)*u,w=wb+(wt-wb)*Math.pow(u,1.5),c=vx+Math.sin(t*1.3+u*3)*14*u;x.setLineDash([14,10]);x.lineDashOffset=-(t*70*(1+u));x.beginPath();x.ellipse(c,y,w,w*.2,0,0,7);x.stroke()}
+ x.setLineDash([]);x.fillStyle='rgba(30,30,34,.5)';
+ for(let i=0;i<26;i++){const u=hs(i,5),y=by+(ty-by)*u,w=wb+(wt-wb)*Math.pow(u,1.5),a=hs(i,6)*6.283+t*(2.2+hs(i,7)*2),c=vx+Math.sin(t*1.3+u*3)*14*u;x.fillRect(c+w*Math.cos(a)-1,y+w*.2*Math.sin(a)-1,2.4,2.4)}
+ x.restore()}
+function wxScreen(x,W,H){                     /* marco de pantalla: lluvia, destellos y aves */
+ const rm=wxRM(),t=rm?0:performance.now()/1000,v=Math.min(1.5,st.wxi/100);
+ if(st.wx!=='clear'){const n=Math.round((st.wx==='rain'?45:st.wx==='storm'?95:55)*v);x.lineWidth=1;x.strokeStyle=night?'rgba(150,175,230,.28)':'rgba(225,235,255,.34)';x.beginPath();
+  for(let i=0;i<n;i++){const sp=520+hs(i,3)*380,ln=9+hs(i,4)*14,yy=(hs(i,2)*(H+60)+t*sp)%(H+60)-30,xx=((hs(i,1)*(W+60)-yy*.22)%(W+60)+W+60)%(W+60)-30;x.moveTo(xx,yy);x.lineTo(xx+ln*.22,yy-ln)}x.stroke()}
+ if(st.wx==='storm'||st.wx==='tornado'){const c=t%9,fa=rm?0:(c<.1?(1-c/.1)*.26:c>.32&&c<.4?(1-(c-.32)/.08)*.16:0)*Math.min(v,1);   /* destellos suaves, uno cada 9 s */
+  if(fa>0){x.fillStyle=`rgba(255,255,255,${fa})`;x.fillRect(0,0,W,H);if(c<.1){const bx=W*(.2+.6*hs(Math.floor(t/9),9));x.strokeStyle='rgba(255,255,255,.6)';x.lineWidth=2;x.beginPath();x.moveTo(bx,0);for(let k=1;k<=8;k++)x.lineTo(bx+(hs(k,Math.floor(t/9))-.5)*60,k*H*.055);x.stroke()}}}
+ if(st.bird){x.strokeStyle=night?'rgba(220,220,230,.55)':'rgba(25,25,30,.55)';x.lineWidth=1.6;x.beginPath();
+  for(let i=0;i<7;i++){const bx=((t*(26+i*2)+i*58)%(W+120))-60,by=H*.2+(i%3)*22+Math.sin(t*3+i)*5+hs(i,8)*18,fl=Math.sin(t*9+i*1.7)*4;x.moveTo(bx-9,by+fl);x.lineTo(bx,by);x.lineTo(bx+9,by+fl)}x.stroke()}}
+let wxRaf=0,wxLast=0;                          /* bucle ligero (~22 fps) que solo redibuja el HUD; se pausa al animar la secuencia */
+function wxTick(n){wxRaf=requestAnimationFrame(wxTick);if(n-wxLast<45||pl.on||document.hidden||!F[pl.i])return;wxLast=n;hud(F[pl.i])}
+function wxSync(){cancelAnimationFrame(wxRaf);wxRaf=0;if((st.wx!=='clear'||st.bird)&&!wxRM())wxRaf=requestAnimationFrame(wxTick)},D=Math.PI/180,cx=W/2,cy=H/2,pp=H/36,L=Math.max(W,H)*2;
  x.save();x.beginPath();x.rect(0,0,W,H);x.clip();x.translate(cx,cy);x.rotate(-f.ph*D);x.translate(0,f.th*pp);
  const gs=x.createLinearGradient(0,-H*1.2,0,0),gg=x.createLinearGradient(0,0,0,H*1.2);gs.addColorStop(0,night?'#02040f':'#2f78d6');gs.addColorStop(1,night?'#0b1a4a':'#a5d5ff');gg.addColorStop(0,night?'#1d160c':'#b8964d');gg.addColorStop(1,night?'#0b0805':'#7a5d29');
- x.fillStyle=gs;x.fillRect(-L,-L,2*L,L);x.fillStyle=gg;x.fillRect(-L,0,2*L,L);x.shadowColor='rgba(0,0,0,.55)';x.shadowBlur=night?0:3;
+ x.fillStyle=gs;x.fillRect(-L,-L,2*L,L);x.fillStyle=gg;x.fillRect(-L,0,2*L,L);wxWorld(x,W,H);x.shadowColor='rgba(0,0,0,.55)';x.shadowBlur=night?0:3;
  x.strokeStyle='#fff';x.fillStyle='#fff';x.font='12px ui-monospace,monospace';x.textAlign='center';
  for(let d=-30;d<=30;d+=5){const y=-d*pp,w=d%10===0?46:26;x.lineWidth=d===0?3:1.5;x.beginPath();
   if(d===0){x.moveTo(-L,0);x.lineTo(L,0)}else{x.moveTo(-w,y);x.lineTo(-12,y);x.moveTo(12,y);x.lineTo(w,y);if(d%10===0){x.fillText(Math.abs(d),-w-14,y+4);x.fillText(Math.abs(d),w+14,y+4)}}x.stroke()}
  x.restore();
- x.save();x.translate(cx,cy);x.strokeStyle='#fff';x.lineWidth=2;const R=H*.36;
+ wxScreen(x,W,H);x.save();x.translate(cx,cy);x.strokeStyle='#fff';x.lineWidth=2;const R=H*.36;
  [-60,-45,-30,-20,-10,0,10,20,30,45,60].forEach(a=>{x.save();x.rotate(a*D);x.beginPath();x.moveTo(0,-R);x.lineTo(0,-R-(a%30===0?12:7));x.stroke();x.restore()});
  x.rotate(-f.ph*D);x.fillStyle='#ffd21f';x.beginPath();x.moveTo(0,-R+2);x.lineTo(-7,-R+16);x.lineTo(7,-R+16);x.fill();x.restore();
  x.strokeStyle='#fff';x.lineWidth=3;x.beginPath();x.moveTo(cx-22,cy+8);x.lineTo(cx,cy-2);x.lineTo(cx+22,cy+8);x.stroke();
@@ -383,7 +407,7 @@ const EN={'Rogelio Quiroz Sánchez, Ingeniero Aeroespacial':'Rogelio Quiroz Sán
 'Tipo de aeronave':'Aircraft type','Avión ligero (referencia)':'Light aircraft (reference)','Avión comercial (Commercial Airliner)':'Commercial Airliner','Avión de carga / transporte (Cargo / Transport Aircraft)':'Cargo / Transport Aircraft','Caza militar / interceptor (Jet Fighter)':'Jet Fighter / Interceptor','Avión acrobático (Acrobatic / Stunt Aircraft)':'Acrobatic / Stunt Aircraft',
 'Avión ligero de referencia (clase Cessna 172): dinámica rápida y estable.':'Reference light aircraft (Cessna 172 class): fast, stable dynamics.','Alta inercia: respuestas lentas y bien amortiguadas. Condición de ascenso representativa.':'High inertia: slow, well-damped responses. Representative climb condition.','Masa elevada, CG desplazado hacia atrás (margen estático reducido) e inercias pesadas; ráfaga de 3 m/s precargada.':'Heavy mass, aft-shifted CG (reduced static margin) and large inertias; 3 m/s gust preloaded.','Alta agilidad y estabilidad estática negativa (CG detrás del punto neutro): inestable en lazo abierto, requiere el controlador activo.':'High agility and negative static stability (CG behind the neutral point): unstable in open loop, requires the active controller.','Tasas de respuesta muy elevadas y gran autoridad de control. El empuje no se modela, solo la dinámica de actitud.':'Very high response rates and large control authority. Thrust is not modeled, only attitude dynamics.',
 'Mapa de polos en el plano complejo':'Pole map in the complex plane','Mapa de polos':'Pole map','Región estable (todos los polos con Re < 0)':'Stable region (all poles with Re < 0)','Semiplano estable':'Stable half-plane','Semiplano inestable':'Unstable half-plane','Reporte exportado (vista de texto)':'Exported report (text view)','Reporte':'Report','⬇ Exportar CSV':'⬇ Export CSV','⬇ Exportar JSON':'⬇ Export JSON','Condiciones Climáticas / Weather Conditions':'Weather Conditions','Escenario ambiental':'Environmental scenario','Despejado (Clear)':'Clear','Lluvia (Rain)':'Rain','Tormenta (Storm)':'Storm','Tornado (Vortex)':'Tornado (Vortex)','Parvadas de aves (Bird Strike / Traffic hazard)':'Bird flocks (Bird Strike / Traffic hazard)','Ráfaga discreta 1−cos (m/s)':'Discrete 1−cos gust (m/s)','Intensidad del fenómeno (%)':'Phenomenon intensity (%)','Escenario activo':'Active scenario','Intensidad':'Intensity','Parvadas de aves':'Bird flocks','Presente':'Present','Ausente':'Absent'};
-const LONG={'Posición del CG':'CG location (x/c̄)','La entrada y la ráfaga':'Input and gust start at t = 1 s. The gust is a 3 s 1−cos profile (vertical for pitch, lateral for roll and yaw).','Lazo cerrado: δ =':'Closed loop: δ = δ_pilot − K·x. Pitch feeds back q and θ, roll feeds back p and φ, yaw feeds back r through a washout filter.','Paso 1: despegue':'Step 1: takeoff (rotation pitch θ). Last step: landing (the descent path is computed to reach the runway). Intermediate steps: commanded pitch θ, bank φ and yaw rate r; load a preset maneuver or edit freely.','Línea amarilla:':'Yellow line: active mode. Dashed gray line: the other mode, for reference. Vertical yellow line: settling time (±2 % band).','La actitud sigue':'Attitude follows the short-period response and the roll damping of the current model (open or closed loop); the flight path is kinematic with a coordinated-turn heading rate. This is not a nonlinear 6-DOF model. Pure yaw is approximated as a commanded yaw rate (sideslip is not modeled). Compass: the rose is referenced to North (N); the cyan vector is the current heading and the dashed magenta line is the initial heading (000°).','Atención: el modelo':'Warning: the model has an unstable mode in this control mode (e.g., CG too far aft). The sequence uses nominal responses; enable closed loop or correct the CG.',
+const LONG={'Posición del CG':'CG location (x/c̄)','La entrada comienza':'The input starts at t = 1 s.','La ráfaga discreta':'The discrete gust is a 3 s 1−cos profile (vertical for pitch, lateral for roll and yaw) starting at t = 1 s.','Lazo cerrado: δ =':'Closed loop: δ = δ_pilot − K·x. Pitch feeds back q and θ, roll feeds back p and φ, yaw feeds back r through a washout filter.','Paso 1: despegue':'Step 1: takeoff (rotation pitch θ). Last step: landing (the descent path is computed to reach the runway). Intermediate steps: commanded pitch θ, bank φ and yaw rate r; load a preset maneuver or edit freely.','Línea amarilla:':'Yellow line: active mode. Dashed gray line: the other mode, for reference. Vertical yellow line: settling time (±2 % band).','La actitud sigue':'Attitude follows the short-period response and the roll damping of the current model (open or closed loop); the flight path is kinematic with a coordinated-turn heading rate. This is not a nonlinear 6-DOF model. Pure yaw is approximated as a commanded yaw rate (sideslip is not modeled). Compass: the rose is referenced to North (N); the cyan vector is the current heading and the dashed magenta line is the initial heading (000°).','Atención: el modelo':'Warning: the model has an unstable mode in this control mode (e.g., CG too far aft). The sequence uses nominal responses; enable closed loop or correct the CG.',
 'Planta:':'Plant:          ẋ = A·x + B·δ + G·w_gust\nActuator:       δ̇ = (δ_cmd − δ)/τ ,  τ adjustable\nOpen loop:      δ_cmd = δ_pilot\nClosed loop:    δ_cmd = δ_pilot − K·x   ⇒   ẋ = (A − B·K)·x + B·δ_pilot\nStability:      all eigenvalues of A_cl with Re(λ) < 0\nModes:          ζ = −Re(λ)/|λ| ,  ωn = |λ|',
 'Perturbaciones pequeñas':'Small perturbations about straight and level flight (θ₀ = 0), stability axes, Ixz = 0.','Subsistemas longitudinal':'Decoupled longitudinal (u, w, q, θ) and lateral-directional (v, p, r, φ, ψ) subsystems. Dimensional derivatives are computed from nondimensional coefficients (CLα, Cmα, Cmq, Clp, Cnβ, etc.) using the Nelson formulation.','El margen estático fija':'Static margin sets Cmα = −CLα·(h_n − h). Move the CG aft until it is negative to see the unstable open-loop mode and how closed loop stabilizes it.','Coeficientes representativos':'Representative coefficients per category (light aircraft per Nelson/Roskam, Cessna 172 class; the rest are indicative values, not a specific type). Check them against the source before citing. Linear actuators without saturation; ISA atmosphere.','Cada × es un polo':'Each × is a pole (λ = σ ± jω). The left half-plane (green) is the stable region. Gray: open loop; yellow: closed loop with the current gains. Symmetric logarithmic scale.','Si tu navegador bloquea':'If your browser blocks the download (for example in the preview), copy the contents of this box.'};
 const RULES=[[/Margen estático: /,'Static margin: '],[/ \(inestable en lazo abierto\)/,' (statically unstable in open loop)'],[/transitorio · pico /,'transient · peak '],[/no converge en (\d+) s/,'does not converge within $1 s'],[/divergente/,'divergent'],[/Maniobra (\d+)/,'Maneuver $1'],[/Región inestable \((\d+) polo\(s\) con Re > 0\)/,'Unstable region ($1 pole(s) with Re > 0)']];
@@ -470,7 +494,7 @@ function hdg(x,W,H,cx,f){const D=Math.PI/180,ps=((f.psi%360)+360)%360,tw=W*.5,pd
  x.fillStyle='#fff';x.font='bold 12px ui-monospace,monospace';x.textAlign='left';x.fillText(_t('Δrumbo')+' '+(dh>=0?'+':'')+dh.toFixed(0)+'°',cx+r+10,ry+4);x.textAlign='center'}
 let night=false;
 $('#tg').onclick=()=>{night=!night;document.documentElement.dataset.theme=night?'dark':'light';$('#tg').setAttribute('aria-checked',night);$('#tg').setAttribute('aria-label',night?'Modo noche activado':'Modo día activado');draw(prog);drawSeq()};
-renderSeq();run();
+renderSeq();run();setLang('en');
 </script>
 </body>
 </html>
