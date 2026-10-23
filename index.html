@@ -342,7 +342,7 @@ function wxScreen(x,W,H){                     /* marco de pantalla: lluvia, dest
 let wxRaf=0,wxLast=0;                          /* bucle ligero (~22 fps) que solo redibuja el HUD; se pausa al animar la secuencia */
 function wxTick(n){wxRaf=requestAnimationFrame(wxTick);if(n-wxLast<45||pl.on||document.hidden||!F[pl.i])return;wxLast=n;hud(F[pl.i])}
 function wxSync(){cancelAnimationFrame(wxRaf);wxRaf=0;if((st.wx!=='clear'||st.bird)&&!wxRM())wxRaf=requestAnimationFrame(wxTick)};
-const D=Math.PI/180,cx=W/2,cy=H/2,pp=H/36,L=Math.max(W,H)*2;
+function hud(f){const[x,W,H]=cv2('hud'),D=Math.PI/180,cx=W/2,cy=H/2,pp=H/36,L=Math.max(W,H)*2;
  x.save();x.beginPath();x.rect(0,0,W,H);x.clip();x.translate(cx,cy);x.rotate(-f.ph*D);x.translate(0,f.th*pp);
  const gs=x.createLinearGradient(0,-H*1.2,0,0),gg=x.createLinearGradient(0,0,0,H*1.2);gs.addColorStop(0,night?'#02040f':'#2f78d6');gs.addColorStop(1,night?'#0b1a4a':'#a5d5ff');gg.addColorStop(0,night?'#1d160c':'#b8964d');gg.addColorStop(1,night?'#0b0805':'#7a5d29');
  x.fillStyle=gs;x.fillRect(-L,-L,2*L,L);x.fillStyle=gg;x.fillRect(-L,0,2*L,L);wxWorld(x,W,H);x.shadowColor='rgba(0,0,0,.55)';x.shadowBlur=night?0:3;
@@ -350,7 +350,7 @@ const D=Math.PI/180,cx=W/2,cy=H/2,pp=H/36,L=Math.max(W,H)*2;
  for(let d=-30;d<=30;d+=5){const y=-d*pp,w=d%10===0?46:26;x.lineWidth=d===0?3:1.5;x.beginPath();
   if(d===0){x.moveTo(-L,0);x.lineTo(L,0)}else{x.moveTo(-w,y);x.lineTo(-12,y);x.moveTo(12,y);x.lineTo(w,y);if(d%10===0){x.fillText(Math.abs(d),-w-14,y+4);x.fillText(Math.abs(d),w+14,y+4)}}x.stroke()}
  x.restore();
- wxScreen(x,W,H);x.save();x.translate(cx,cy);x.strokeStyle='#fff';x.lineWidth=2; RHud=H*.36;
+ wxScreen(x,W,H);x.save();x.translate(cx,cy);x.strokeStyle='#fff';x.lineWidth=2;const RHud=H*.36;
  [-60,-45,-30,-20,-10,0,10,20,30,45,60].forEach(a=>{x.save();x.rotate(a*D);x.beginPath();x.moveTo(0,-RHud);x.lineTo(0,-RHud-(a%30===0?12:7));x.stroke();x.restore()});
  x.rotate(-f.ph*D);x.fillStyle='#ffd21f';x.beginPath();x.moveTo(0,-RHud+2);x.lineTo(-7,-RHud+16);x.lineTo(7,-RHud+16);x.fill();x.restore();
  x.strokeStyle='#fff';x.lineWidth=3;x.beginPath();x.moveTo(cx-22,cy+8);x.lineTo(cx,cy-2);x.lineTo(cx+22,cy+8);x.stroke();
@@ -363,6 +363,7 @@ const D=Math.PI/180,cx=W/2,cy=H/2,pp=H/36,L=Math.max(W,H)*2;
 x.textAlign='left';
 x.fillText('\u03B1 '+f.al.toFixed(1)+'\u00B0   \u03B3 '+f.g.toFixed(1)+'\u00B0   \u03B8 '+f.th.toFixed(1)+'\u00B0   \u03C6 '+f.ph.toFixed(0)+'\u00B0',76,64);
 x.textAlign='center';
+x.font='11px ui-monospace,monospace';x.fillText('kt',37,cy-H*.55/2-4);x.fillText('ft',W-37,cy-H*.55/2-4)}
 function acRear(c,x,y,ph,s,col,al,dash){c.save();c.translate(x,y);c.rotate(ph*Math.PI/180);c.strokeStyle=col;c.fillStyle=col;c.lineWidth=2.5;c.setLineDash(dash||[]);c.globalAlpha=al;
  c.beginPath();c.moveTo(-s,0);c.lineTo(s,0);c.moveTo(0,0);c.lineTo(0,-s*.5);c.moveTo(-s*.25,-s*.5);c.lineTo(s*.25,-s*.5);c.stroke();
  c.beginPath();c.arc(0,0,s*.16,0,7);c.globalAlpha=al*.4;c.fill();c.globalAlpha=al;c.stroke();c.restore()}
