@@ -221,6 +221,31 @@ function windAt(t){const sp=st.wspd+WIND0[st.wx]*st.wxi/100,d=st.wdir*Math.PI/18
  return{sp,n:-sp*Math.cos(d),e:-sp*Math.sin(d),u:gustSeq(t)}}   /* wdir = procedencia; n, e = componentes hacia donde sopla (Norte, Este); u = corriente vertical (+ arriba) */
 function windTxt(){const sp=st.wspd+WIND0[st.wx]*st.wxi/100,c=['Norte','Noreste','Este','Sureste','Sur','Suroeste','Oeste','Noroeste'][Math.round(st.wdir/45)%8];
  $('#wxw').innerHTML=(sp>.05?`<p><span>Procedencia del viento</span>: <b>${String(st.wdir).padStart(3,'0')}°</b> <span>${c}</span></p>`:'')+`<p><span>Viento medio</span>: <b>${sp.toFixed(1)} m/s</b> (${Math.round(sp*1.944)} kt)</p>`+(st.gust>0?`<p><span>Ráfaga vertical máxima</span>: <b>${st.gust.toFixed(1)} m/s</b></p>`:'')}
+/* Fase 5.1: FPV (bird) y cintas de velocidad y altitud del HUD */
+function gnd(f){const D=Math.PI/180,Vh=f.V*Math.cos(f.g*D),n=Vh*Math.cos(f.psi*D)+(f.wn||0),e=Vh*Math.sin(f.psi*D)+(f.we||0),Vg=Math.hypot(n,e),trk=((Math.atan2(e,n)/D)+360)%360;
+ return{gs:Vg,trk,da:((trk-f.psi)%360+540)%360-180,gg:Math.atan2(f.V*Math.sin(f.g*D)+(f.wu||0),Vg)/D}}   /* velocidad, rumbo, deriva y ángulo de trayectoria respecto al suelo (aire + viento) */
+function drawBird(x,px,py,col,lw,al){x.save();x.globalAlpha=al||1;for(const[c,w]of[['rgba(0,0,0,.55)',lw+2.4],[col,lw]]){x.strokeStyle=c;x.lineWidth=w;x.beginPath();x.arc(px,py,9,0,7);x.moveTo(px-26,py);x.lineTo(px-9,py);x.moveTo(px+9,py);x.lineTo(px+26,py);x.moveTo(px,py-9);x.lineTo(px,py-18);x.stroke()}x.restore()}   /* pájaro con contorno oscuro para leerse sobre cualquier fondo */
+function fpvHud(x,W,H,cx,cy,pp,f){
+ drawBird(x,cx,cy+(f.th-f.g)*pp,'#4df0ff',2.6);   /* FPV respecto a la masa de aire: α por debajo del eje del morro (β = 0 en el modelo cinemático) */
+ if((f.wsp||0)>1){const q=gnd(f),gx=cx+Math.max(-W*.3,Math.min(W*.3,q.da*pp)),gy=cy+(f.th-q.gg)*pp;drawBird(x,gx,gy,'#ffd21f',1.6,.8);   /* trayectoria sobre el suelo: el viento la desplaza (deriva y γ de suelo) */
+  x.save();x.font='bold 10px ui-monospace,monospace';x.textAlign='left';x.lineWidth=3;x.strokeStyle='rgba(0,0,0,.7)';x.strokeText('GT',gx+30,gy+4);x.fillStyle='#ffd21f';x.fillText('GT',gx+30,gy+4);x.restore()}}
+function tapesHud(x,W,H,cy,f){const i=pl.i,g1=F[Math.min(F.length-1,i+1)]||f,fr=pl.on?pl.acc:0,lp=(a,b)=>a+(b-a)*fr,   /* interpolación entre fotogramas: cintas fluidas */
+ V=lp(f.V,g1.V)*1.944,h=lp(f.h,g1.h)*3.281,Ht=H*.55,tp=cy-Ht/2,fa=F[Math.min(F.length-1,i+5)],fb=F[Math.max(0,i-5)],
+ acc=(fa.V-fb.V)/.4*1.944,vs=(fa.h-fb.h)/.4*196.85,q=gnd(f),                  /* aceleración (kt/s) y velocidad vertical (ft/min) en una ventana de 0.4 s */
+ wx=WXS[st.wx],bg=Math.min(.85,.4+.3*Math.min(1,(wx.vis||0)*2+(st.wx==='storm'||st.wx==='tornado'?.35:st.wx==='rain'?.2:0))+(night?.1:0));   /* el fondo de la cinta se oscurece con nieve, lluvia o tormenta */
+ const halo=(s,px,py,al)=>{x.textAlign=al;x.lineWidth=3;x.strokeStyle='rgba(0,0,0,.7)';x.strokeText(s,px,py);x.fillStyle='#fff';x.fillText(s,px,py)};
+ const tape=(x0,val,span,step,lab,right,alt)=>{const w=58,pk=Ht/span;
+  x.fillStyle=`rgba(5,10,25,${bg})`;x.fillRect(x0,tp-16,w,Ht+30);x.strokeStyle='rgba(255,255,255,.35)';x.lineWidth=1;x.strokeRect(x0,tp-16,w,Ht+30);
+  x.save();x.beginPath();x.rect(x0,tp,w,Ht);x.clip();
+  if(alt&&val-span/2<0){const yg=cy+val*pk;x.fillStyle='rgba(160,115,45,.6)';x.fillRect(x0,yg,w,tp+Ht-yg);x.strokeStyle='rgba(255,220,150,.5)';x.lineWidth=1;for(let yy=yg+6;yy<tp+Ht;yy+=8){x.beginPath();x.moveTo(x0,yy);x.lineTo(x0+w,yy-6);x.stroke()}}   /* suelo: franja rayada bajo 0 ft */
+  x.font='bold 12px ui-monospace,monospace';x.lineWidth=1.5;
+  for(let k=Math.ceil((val-span/2)/step)*step;k<=val+span/2;k+=step){const y=cy-(k-val)*pk,xe=right?x0:x0+w;x.strokeStyle='#fff';x.beginPath();x.moveTo(xe,y);x.lineTo(xe+(right?10:-10),y);x.stroke();if(k%lab===0)halo(String(k),right?x0+14:x0+w-14,y+4,right?'left':'right')}
+  if(!alt){const yb=cy-(st.V*1.944-val)*pk;if(yb>tp&&yb<tp+Ht){x.fillStyle='#4df0ff';x.beginPath();x.moveTo(x0+w,yb);x.lineTo(x0+w-9,yb-5);x.lineTo(x0+w-9,yb+5);x.fill()}   /* marca de la velocidad de referencia */
+   const tr=Math.max(-span/2,Math.min(span/2,acc*10));x.strokeStyle='#ff4fd8';x.lineWidth=3;x.beginPath();x.moveTo(x0+5,cy);x.lineTo(x0+5,cy-tr*pk);x.stroke()}   /* vector de tendencia: velocidad prevista a 10 s */
+  x.restore();
+  x.fillStyle='#000';x.fillRect(x0,cy-11,w,22);x.strokeStyle='#ffd21f';x.lineWidth=1.5;x.strokeRect(x0,cy-11,w,22);x.fillStyle='#fff';x.font='bold 13px ui-monospace,monospace';x.textAlign='center';x.fillText(Math.round(val),x0+w/2,cy+5);
+  x.font='bold 10px ui-monospace,monospace';halo(alt?'VS '+(vs>=0?'+':'')+Math.round(vs/10)*10:'GS '+Math.round(q.gs*1.944),x0+w/2,tp+Ht+11,'center')};   /* pie: velocidad vertical / velocidad respecto al suelo */
+ tape(8,V,40,5,10,false,false);tape(W-66,h,200,20,40,true,true)}
 function pwrWarn(x,W,H,f){if((f.tf||1)>=.5||(pl.on&&Math.floor(performance.now()/300)%2))return;   /* aviso crítico de potencia (parpadea al animar) */
  const s=_t('PÉRDIDA CRÍTICA DE POTENCIA')+'  '+Math.round(f.tf*100)+' %';x.save();x.font='bold 14px ui-monospace,monospace';x.textAlign='center';const w=x.measureText(s).width+20;
  x.fillStyle='rgba(210,20,20,.88)';x.fillRect(W/2-w/2,H*.2-15,w,22);x.fillStyle='#fff';x.fillText(s,W/2,H*.2);x.restore()}
@@ -469,10 +494,10 @@ function hud(f){const[x,W,H]=cv2('hud'),D=Math.PI/180,cx=W/2,cy=H/2,pp=H/36,L=Ma
  [-60,-45,-30,-20,-10,0,10,20,30,45,60].forEach(a=>{x.save();x.rotate(a*D);x.beginPath();x.moveTo(0,-RHud);x.lineTo(0,-RHud-(a%30===0?12:7));x.stroke();x.restore()});
  x.rotate(-pv*D);x.fillStyle='#ffd21f';x.beginPath();x.moveTo(0,-RHud+2);x.lineTo(-7,-RHud+16);x.lineTo(7,-RHud+16);x.fill();x.restore();
  x.strokeStyle='#fff';x.lineWidth=3;x.beginPath();x.moveTo(cx-22,cy+8);x.lineTo(cx,cy-2);x.lineTo(cx+22,cy+8);x.stroke();
- const fy=cy+(f.th-f.g)*pp;x.strokeStyle='#4df0ff';x.lineWidth=2.5;x.beginPath();x.arc(cx,fy,9,0,7);x.moveTo(cx-26,fy);x.lineTo(cx-9,fy);x.moveTo(cx+9,fy);x.lineTo(cx+26,fy);x.moveTo(cx,fy-9);x.lineTo(cx,fy-18);x.stroke();
+ fpvHud(x,W,H,cx,cy,pp,f);
  const dx=Math.max(-W*.3,Math.min(W*.3,(f.phc-f.ph)*pp*.5)),dy=Math.max(-H*.3,Math.min(H*.3,-(f.thc-f.th)*pp));
  x.strokeStyle='#ff4fd8';x.lineWidth=2.5;x.beginPath();x.moveTo(cx+dx,cy+dy-10);x.lineTo(cx+dx+10,cy+dy);x.lineTo(cx+dx,cy+dy+10);x.lineTo(cx+dx-10,cy+dy);x.closePath();x.stroke();
- tape(x,8,58,cy,H*.55,f.V*1.944,40,5,10,false);tape(x,W-66,58,cy,H*.55,f.h*3.281,200,20,40,true);
+ tapesHud(x,W,H,cy,f);
  x.fillStyle='#fff';x.textAlign='center';x.font='bold 13px ui-monospace,monospace';
  hdg(x,W,H,cx,f);invTag(x,W,H,cx,f);windSym(x,W,H,f);pwrWarn(x,W,H,f);
 x.textAlign='left';
